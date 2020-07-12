@@ -1,5 +1,8 @@
 from ext import db
-class User(db.Model):
+from flask_login import UserMixin
+
+
+class User(UserMixin, db.Model):
     """ User Model """
 
     __tablename__ = "users"

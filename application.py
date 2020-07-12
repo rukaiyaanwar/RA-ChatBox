@@ -1,4 +1,5 @@
 from flask import Flask, render_template, redirect, url_for
+from flask_login import LoginManager, login_user, current_user, login_required, logout_user
 from wtforms_fields import *
 from ext import db
 from passlib.hash import pbkdf2_sha256
@@ -11,6 +12,15 @@ app.secret_key = "replace later"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://ahbmnnncaxrzkb:72ddac88de0c7dbf0520676340215e4977f06e8505a0b78265a307afd22fd030@ec2-34-233-226-84.compute-1.amazonaws.com:5432/dfjoh3pdfha3dm'
 
 db.init_app(app)
+
+#Configure Flask login
+
+login = LoginManager(app)
+login.init_app(app)
+
+@login.user_loader
+def load_user(id):
+    return User.query.get(int(id))
 
 @app.route('/', methods = ['GET','POST'])
 
@@ -44,9 +54,25 @@ def login():
     #Allow login if validation success
 
     if login_form.validate_on_submit():
-        return "Logged in, finally!"
+        user_object = User.query.filter_by(username=login_form.username.data).first()
+        login_user(user_object)
+        return redirect(url_for('chat'))
+        
 
     return render_template("login.html", form=login_form)
+
+@app.route('/chat', methods =['GET','POST'])
+
+def chat():
+    if not current_user.is_authenticated:
+        return "Please login, before accesing chats!"
+    return "Chat with me!"
+
+@app.route('/logout', methods =['GET','POST'])
+
+def logout():
+    logout_user()
+    return "logged out using flask-login"
 
 if __name__ == "__main__":
     app.run(debug=True)
